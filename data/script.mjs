@@ -1,6 +1,8 @@
 // npm i axios
 import axios from "axios";
 import { writeFileSync } from "fs";
+import * as fs from 'fs/promises';
+import path from 'path';
 
 const REST_API_KEY = process.env.KAKAO_REST_KEY;
 
@@ -114,4 +116,28 @@ async function main() {
   }
 }
 
-main();
+// main();
+
+export async function getCategories() {
+  const dataDir = '.';
+  const files = await fs.readdir(dataDir);
+  const jsonFiles = files.filter(file => file.startsWith('restaurants_') && file.endsWith('.json'));
+
+  let allCategories = new Set();
+
+  for (const file of jsonFiles) {
+    const filePath = path.join(dataDir, file);
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+    data.forEach(item => {
+      if (item.category) {
+        item.category.split('>').forEach(c => allCategories.add(c.trim()));
+      }
+    });
+  }
+
+  const sortedCategories = [...allCategories].sort();
+  console.log(sortedCategories.join('\n'));
+}
+
+getCategories();
